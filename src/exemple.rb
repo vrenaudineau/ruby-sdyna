@@ -26,26 +26,29 @@ module SDYNA
 			# On récupère les sigmas
 			sigmas = exemples.collect do |e| e.sigma end
 			sigmas.uniq!
+			# On récupère les exemples par sigma
+			sigma_vers_exemples = exemples.group_by do |e|
+				e.sigma
+			end
+			# On récupère les exemples par vi
+			vi_vers_exemples = exemples.group_by do |e|
+				e.state[var]
+			end
 			# On itère sur les sigma
 			for sigma in sigmas
-				# On récupère les exemples qui correspondent à ce sigma
-				sigma_vers_exemples[sigma] = exemples.select do |e|
-					e.sigma == sigma
-				end
 				# nb_ex4sig le nombre d'exemple pour ce sigma
-				nb_ex4sig = sigma_vers_exemples[sigma].size.to_f
-				
+				nb_ex4sig = (sigma_vers_exemples[sigma].nil? ? 0 : sigma_vers_exemples[sigma].size.to_f)
 				# On itère sur les vi de var
 				for vi in var
-					# On récupère les exemples qui correspondent à ce vi si ce n'est pas déjà fait
-					vi_vers_exemples[vi] ||= exemples.select do |e|
-						e.state[var] == vi
-					end
 					# nb_ex4vi le nombre d'exemple pour ce vi
-					nb_ex4vi = vi_vers_exemples[vi].size.to_f
+					nb_ex4vi = (vi_vers_exemples[vi].nil? ? 0 : vi_vers_exemples[vi].size.to_f)
 					
 					# nb_ex4viNsig le nombre d'exemple pour ce sigma et ce vi à la fois
-					nb_ex4viNsig = (sigma_vers_exemples[sigma] & vi_vers_exemples[vi]).size.to_f
+					nb_ex4viNsig = if sigma_vers_exemples[sigma].nil? || vi_vers_exemples[vi].nil?
+						0
+					else
+						(sigma_vers_exemples[sigma] & vi_vers_exemples[vi]).size.to_f
+					end
 					
 					# On somme pour chaque sigma et chaque vi de var
 					result += (nb_ex4viNsig - nb_ex4vi * nb_ex4sig / n)**2 /
@@ -54,6 +57,22 @@ module SDYNA
 			end
 			
 			return result
+		end
+		#
+		def Exemple.select_attr_para( exemples, vars )
+			# Pour chaque variable
+			thds = {}
+			vars.each do |v|
+				thds[v] = Thread.start do
+					Exemple.chi_deux(exemples, v)
+				end
+			end
+			max = [vars.first,0.0]
+			thds.each do |v,t|
+				chi = t.value
+				max = [v, chi] if chi > max.last
+			end
+			return max.first
 		end
 		#
 		def Exemple.select_attr( exemples, vars )
@@ -69,9 +88,9 @@ module SDYNA
 		def Exemple.aggregate( exemples, var )
 			raise ArgumentError, "Wait a Variable, got a #{var.class}." unless var.kind_of?(Variable)
 			# On crée une Hash vi=>0.0
-			p = Hash[ var.collect do |vi| [vi,0.0] end ]
+			p = Hash[ var.collect { |vi| [vi,0.0] } ]
 			for e in exemples
-				p[e.state[var]] += 1.0
+				p[e.sigma] += 1.0
 			end
 			n = exemples.size.to_f
 			p.each do |k,v|

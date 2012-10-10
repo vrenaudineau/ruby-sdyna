@@ -8,7 +8,7 @@ require_relative "node"
 module SDYNA
 	class FMDP
 		attr_accessor :gamma, :epsilon, :transitions, :valeur, :recompenses
-		attr_reader :valeurMaxComb
+		attr_reader :valeurMaxComb, :variables, :actions
 		
 		def initialize(variables, actions)
 			# Contient la liste des variables
@@ -124,7 +124,67 @@ module SDYNA
 			puts "in FMDP::regress : a=#{a}, @valeur=\n#{@valeur}\np=\n#{p}"
 			raise err
 		end # FMDP.regress
-
+		#
+		def update_tree2(node, exempl)
+			path = node.path
+			
+			# Si on nous passe un ensemble d'exemple, c'est qu'on vient de faire une séparation.
+			if exempl.kind_of?(Array)
+				node.exemples = exempl
+				# On vérifie si tous les sigmas sont identiques.
+				sigma = exempl.first.sigma
+				if exempl.all? { |ex| ex.sigma == sigma }
+					node.set_leaf(sigma)
+				# Les sigmas sont différents, on va séparer
+				else
+					# On choisit la variable
+					possibles = @variables.reject do |var| path.key?(var) end
+					raise "Error : Ne peut pas subdiviser plus. In #{path.inspect} with #{exempl} : \n#{self}" if possibles.empty?
+					var = Exemple.select_attr( exempl, possibles )
+					# On l'affecte,
+					node.set_test(var)
+					# On update les nouveaux enfants.
+					for vi, exList in exempl.group_by { |ex| ex.state[var] }
+						update_tree2(node[vi], exList)
+					end
+				end	
+			# Sinon, si on a qu'un exemple
+			else
+				raise ArgumentError if ! exempl.kind_of?(Exemple)
+				node.exemples << exempl
+				
+				# Si on a qu'un exemple, le nouveau, on l'attribut et on arrête.
+				if node.leaf? && node.exemples.size == 1
+					node.set_leaf(exempl.sigma)
+				# si on est sur une feuille	(donc tout les sigmas sont identiques)
+				# et que le nouvelle exemple colle, on arrête.
+				elsif node.leaf? && node.exemples.first.sigma == exempl.sigma
+					# on ne fait rien
+				# Sinon, si on a pas une feuille, ou que ça ne colle plus
+				# on choisit la meilleure variable.
+				else
+					possibles = @variables.reject do |var| path.key?(var) end
+					raise "Error : Ne peut pas subdiviser plus. In #{path.inspect} with #{exempl} : \n#{self}" if possibles.empty?
+					var = Exemple.select_attr( node.exemples, possibles )
+					
+					# Si on testait déjà la même variable
+					if node.test?(var)
+						# On update l'enfant avec l'exemple.
+						child = node[exempl.state[var]]
+						update_tree2(child, exempl)
+					# Si on était sur une feuille, 
+					# ou que la variable testée avant n'est plus la même
+					else
+						# On l'affecte
+						node.set_test(var)
+						# On update les nouveaux enfants.
+						for vi, exList in node.exemples.group_by { |ex| ex.state[var] }
+							update_tree2(node[vi], exList)
+						end
+					end
+				end
+			end
+		end # def FMDP.update_tree2
 		#
 		def update_tree(node, newExemple)
 			# 1.
@@ -159,6 +219,72 @@ module SDYNA
 			raise err
 		end # FMDP.update_tree
 
+		#
+		def update_tree_s2(node, varTrans, e)
+			path = node.path
+			
+			# Si on nous passe un ensemble d'exemple, c'est qu'on vient de faire une séparation.
+			if e.kind_of?(Array)
+				node.exemples = e
+				exemples = node.exemples
+
+				# On récupère la meilleure variable
+				possibles = @variables.reject do |v| path.key?(v) end
+				raise "Error : Ne peut pas subdiviser plus. In #{path.inspect} with #{exemples} : \n#{self}" if possibles.empty?
+				var = Exemple.select_attr(exemples, possibles)
+				
+				# Si la différence n'est pas signifcative
+				if ! Exemple.diff_sig?(exemples, var, @epsilon)
+					node.set_leaf( Exemple.aggregate(exemples, varTrans) )
+				else
+					# On l'affecte,
+					node.set_test(var)
+					# On update les nouveaux enfants.
+					for vi, exList in exemples.group_by { |ex| ex.state[var] }
+						update_tree_s2(node[vi], varTrans, exList)
+					end
+				end
+			# Sinon, si on a qu'un exemple
+			else
+				raise ArgumentError if ! e.kind_of?(Exemple)
+				node.exemples << e
+				exemples = node.exemples
+				
+				var = node.test
+				possibles = nil
+				# On calcule la variable la plus discriminante si on en avait pas déjà une.
+				if var.nil?
+					possibles = @variables.reject do |v| path.key?(v) end
+					raise "Error : Ne peut pas subdiviser plus. In #{path.inspect} with #{e} : \n#{self}" if possibles.empty?
+					var = Exemple.select_attr(node.exemples, possibles)
+				end
+				# Si la variable n'est pas suffisemment discriminante
+				if ! Exemple.diff_sig?(node.exemples, var, @epsilon)
+					# Si ce n'est pas la variable qu'on testait déjà qui n'était pas suffisante
+					if node.test.nil?
+						# On aggrège.
+						node.set_leaf( Exemple.aggregate(node.exemples, varTrans) )
+					else
+						# Sinon on recherche la meilleure variable.
+						update_tree_s2(node, varTrans, exemples)
+					end
+				# Si elle est suffisemment discriminante
+				else
+					# Si on testait déjà cette variable
+					if node.test?(var)
+						child = node[e.state[var]]
+						update_tree_s2(child, varTrans, e)
+					else
+						# On l'affecte
+						node.set_test(var)
+						# On update les nouveaux enfants.
+						for vi, exList in exemples.group_by { |ex| ex.state[var] }
+							update_tree_s2(node[vi], varTrans, exList)
+						end
+					end
+				end
+			end
+		end # def FMDP.update_tree_s2
 		#
 		def update_tree_s( node, var, newExemple )
 			# 1.
@@ -202,10 +328,10 @@ module SDYNA
 		def updateFMDP( s, a, sp, r )
 			# Update les transtions lorsqu'on fait l'action a dans l'état s
 			for v in @variables
-				update_tree_s(@transitions[a][v], v, Exemple.new(s, sp[v]))
+				update_tree_s2(@transitions[a][v], v, Exemple.new(s, sp[v]))
 			end
 			# Update les récompenses, qui ne sont fonction que de l'état atteint.
-			update_tree(@recompenses, Exemple.new( sp.clone, r )) # .clone.update({:action=>a})
+			update_tree2(@recompenses, Exemple.new( sp.clone, r )) # .clone.update({:action=>a})
 		rescue => err
 			puts "in FMDP::updateFMDP : s=#{s}, a=#{a}, sp=#{sp}, r=#{r}"
 			raise err
@@ -268,6 +394,10 @@ module SDYNA
 				res[var] = vi
 			end
 			return res
+		end
+		
+		def politique
+			return "wait"
 		end
 		
 		def to_s

@@ -37,5 +37,28 @@ module SDYNA
 			assert_equal(0.0, Exemple.chi_deux( [], x ))
 			assert_equal(0.0, Exemple.chi_deux( [e10], x ))
 		end
+		
+		def test_perf
+			v = Variable.new("v", [true,false])
+			w = Variable.new("w", [true,false])
+			x = Variable.new("x", [true,false])
+			y = Variable.new("y", [true,false])
+			z = Variable.new("z", [true,false])
+			e = []
+			1000.times do
+				vi = rand(2) == 0
+				wi = rand(2) == 0
+				xi = rand(2) == 0
+				yi = rand(2) == 0
+				zi = rand(2) == 0
+				sig = rand(1..5)
+				e << Exemple.new({v=>vi,w=>wi,x=>xi,y=>yi,z=>zi},sig)
+			end
+			i = 0
+			100.times do
+				i += 1 if Exemple.select_attr( e, [v,w,x,y,z] ).label == "x"
+			end
+			p i
+		end
 	end
 end

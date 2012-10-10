@@ -14,6 +14,10 @@ module SDYNA
 		def initialize( label, values )
 			raise ArgumentError, "values has to be an Enumerable." unless values.kind_of?(Enumerable)
 			@label, @values = label.to_s, values
+			@toString = "Var['#{@label}' in #{@values.join(",")}]"
+			@hash = @toString.hash
+			@size = @values.size
+			@inspect = "'#{@label}'"
 		end
 		# Itère sur values.
 		def each
@@ -24,15 +28,15 @@ module SDYNA
 		end
 		# Affiche juste le label.
 		def inspect
-			return "'#{@label}'"
+			return @inspect
 		end
 		## La taille d'une variable est la taille du domaine de ses valeurs.
 		def size
-			return values.size
+			return @size
 		end	
 		#
 		def to_s
-			return "Var['#{@label}' in #{@values.join(",")}]"
+			return @toString
 		end
 		## Est ce que v fait partie des valeurs possibles de cette variable ?
 		def value?( v )
@@ -49,7 +53,7 @@ module SDYNA
 		end
 		#
 		def hash
-			return to_s.hash
+			return @hash
 		end
 	end # class Variable
 end

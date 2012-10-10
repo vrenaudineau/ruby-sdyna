@@ -225,7 +225,6 @@ module SDYNA
 				"hoc" => false,
 				"hrc" => false
 			}
-			fmdp.epsilon = 10
 			
 			def doAct( s, a )
 				newState = s.clone
@@ -235,7 +234,7 @@ module SDYNA
 					newState["off"] = ! s["off"]
 					newState["wet"] = s["wet"] || (s["rain"] && ! s["umb"])
 				when "buy"
-					newState["hrc"] = s["hrc"] || ! s["off"]
+					newState["hrc"] = (s["hrc"] || ! s["off"])
 				when "del"
 					newState["hoc"] = false
 					# Si le robot à un café et est au bureau
@@ -248,7 +247,7 @@ module SDYNA
 				end
 				newState["rain"] = (rand() > 0.4)
 				newState["hoc"] = false unless a == "del" # il a bu son café
-				newState["wet"] = s["wet"] && (rand() < 0.8) unless a == "go" && s["rain"] && ! s["umb"] # 20% de chance de sécher
+				(newState["wet"] = s["wet"] && (rand() < 0.8)) unless a == "go" && s["rain"] && ! s["umb"] # 20% de chance de sécher
 				
 				r += 1 if ! newState["wet"]
 				r += 9 if newState["hoc"]
@@ -256,25 +255,32 @@ module SDYNA
 				return newState, r
 			end
 			
-			i = 0
+			fmdp.epsilon = 20
 			n = 1000
-			print sprintf("%2d%%",i)
-			while i < n
+			print sprintf("%2d%%",1)
+			for i in 1..n
 				action = fmdp.act(currentState)
 				newState, r = doAct(currentState, action)
+				#~ p( [currentState,action,newState, r] )
 				fmdp.observe(currentState, action, newState, r)
 				currentState = newState
-				i+= 1
 				print "\b\b\b"
 				print sprintf("%2d%%",i*100/n)
 				$stdout.flush
 			end
-			p( [currentState, action, newState, r] )
+			puts "\b\b\b\b"
 			puts fmdp
 			
-			#~ result = nil
-			#~ normalResult = nil
-			#~ raise "result=\n#{result}\nnormal result=\n#{normalResult}" if result != normalResult
+			#
+			#~ rain = fmdp.variables.find { |var| var.label == "rain" }
+			#~ for a in fmdp.actions
+				#~ assert( fmdp.transitions[a][rain].leaf?, "rain for #{a} test the var "+fmdp.transitions[a][rain].test.inspect ) 
+			#~ end
+			#~ 
+			#~ #
+			#~ off = fmdp.variables.find { |var| var.label == "off" }
+			#~ assert fmdp.transitions["go"][off].test?(off)
+			
 		end # coffeeRobot
 	end
 end
