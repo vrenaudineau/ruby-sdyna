@@ -14,9 +14,9 @@ module SDYNA
 		def initialize( label, values )
 			raise ArgumentError, "values has to be an Enumerable." unless values.kind_of?(Enumerable)
 			@label, @values = label.to_s, values
-			@toString = "Var['#{@label}' in #{@values.join(",")}]"
+			@toString = "Var['#{@label}' in #{@values.to_a.join(",")}]"
 			@hash = @toString.hash
-			@size = @values.size
+			@size = @values.to_a.size
 			@inspect = "'#{@label}'"
 		end
 		# Itère sur values.

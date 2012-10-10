@@ -255,31 +255,31 @@ module SDYNA
 				return newState, r
 			end
 			
-			fmdp.epsilon = 20
+			fmdp.epsilon = 30
 			n = 1000
-			print sprintf("%2d%%",1)
+			#~ print sprintf("%2d%%",1)
 			for i in 1..n
 				action = fmdp.act(currentState)
 				newState, r = doAct(currentState, action)
 				#~ p( [currentState,action,newState, r] )
 				fmdp.observe(currentState, action, newState, r)
 				currentState = newState
-				print "\b\b\b"
-				print sprintf("%2d%%",i*100/n)
-				$stdout.flush
+				#~ print "\b\b\b"
+				#~ print sprintf("%2d%%",i*100/n)
+				#~ $stdout.flush
 			end
-			puts "\b\b\b\b"
-			puts fmdp
+			#~ puts "\b\b\b\b"
+			#~ puts fmdp
 			
 			#
-			#~ rain = fmdp.variables.find { |var| var.label == "rain" }
-			#~ for a in fmdp.actions
-				#~ assert( fmdp.transitions[a][rain].leaf?, "rain for #{a} test the var "+fmdp.transitions[a][rain].test.inspect ) 
-			#~ end
-			#~ 
-			#~ #
-			#~ off = fmdp.variables.find { |var| var.label == "off" }
-			#~ assert fmdp.transitions["go"][off].test?(off)
+			rain = fmdp.variables.find { |var| var.label == "rain" }
+			for a in fmdp.actions
+				assert( fmdp.transitions[a][rain].leaf?, "rain for #{a} test the var "+fmdp.transitions[a][rain].test.inspect ) 
+			end
+			
+			#
+			off = fmdp.variables.find { |var| var.label == "off" }
+			assert fmdp.transitions["go"][off].test?(off)
 			
 		end # coffeeRobot
 	end
