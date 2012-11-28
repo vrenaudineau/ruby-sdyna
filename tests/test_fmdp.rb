@@ -257,18 +257,18 @@ module SDYNA
 			
 			fmdp.epsilon = 30
 			n = 1000
-			#~ print sprintf("%2d%%",1)
+			print sprintf("%2d%%",1)
 			for i in 1..n
 				action = fmdp.act(currentState)
 				newState, r = doAct(currentState, action)
 				#~ p( [currentState,action,newState, r] )
 				fmdp.observe(currentState, action, newState, r)
 				currentState = newState
-				#~ print "\b\b\b"
-				#~ print sprintf("%2d%%",i*100/n)
-				#~ $stdout.flush
+				print "\b\b\b"
+				print sprintf("%2d%%",i*100/n)
+				$stdout.flush
 			end
-			#~ puts "\b\b\b\b"
+			puts "\b\b\b\b"
 			#~ puts fmdp
 			
 			#

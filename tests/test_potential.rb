@@ -43,9 +43,9 @@ module SDYNA
 			p3 = Potential.new.add(V1, {true=>0.4,false=>0.6})
 			p4 = Potential.new.add(V2, {"sunny"=>0.1, "cloudy"=>0.4, "rainy"=>0.5})
 			
-			i1 = Instanciation.from_hash({V1=>true, V2=>"sunny"})
-			i2 = Instanciation.from_hash({V1=>false, V2=>"cloudy"})
-			i3 = Instanciation.from_hash({V1=>false})
+			i1 = {V1=>true, V2=>"sunny"}
+			i2 = {V1=>false, V2=>"cloudy"}
+			i3 = {V1=>false}
 			#assert_in_delta((1.1-0.9), 0.2, 0.0001)
 			assert_in_delta(p1[i1], 0.04, 0.001)
 			assert_in_delta(p1[i2], 0.24, 0.001)

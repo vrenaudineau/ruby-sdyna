@@ -1,6 +1,5 @@
 # encoding: utf-8
 require_relative "variable"
-require_relative "instanciation"
 require_relative "potential"
 
 module SDYNA
@@ -76,11 +75,9 @@ module SDYNA
 		end # Node.initialize
 		# [](b : U) : Node
 		# [](n : Node) : U
-		# [](i : Instanciation or Hash) : Node
+		# [](h : Hash) : Node
 		def [](arg)
-			if arg.kind_of?(Instanciation) || arg.kind_of?(Hash)
-				#~ arg = Instanciation.from_hash(arg) if arg.kind_of?(Hash)
-				#~ raise ArgumentError, "Instanciation doesn't test the Variable #{@test.label}." if ! arg.has_var?(@test)
+			if arg.kind_of?(Hash)
 				return self if ! arg.key?(@test)
 				return @branches[arg[@test]][arg]
 			elsif arg.kind_of?(Node)

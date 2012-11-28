@@ -1,6 +1,5 @@
 # encoding: utf-8
 require_relative "variable"
-require_relative "instanciation"
 require_relative "potential"
 require_relative "exemple"
 require_relative "node"

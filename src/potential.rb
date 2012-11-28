@@ -1,6 +1,5 @@
 # encoding: utf-8
 require_relative "variable"
-require_relative "instanciation"
 
 module SDYNA
 	#
@@ -28,11 +27,13 @@ module SDYNA
 			if arg.kind_of?(Variable)
 				raise ArgumentError, "#{arg} ne fait pas partie du Potential" if @p[arg].nil?
 				return @p[arg].dup
-			# [](arg : Instanciation) : Float
-			elsif arg.kind_of?(Instanciation) or arg.kind_of?(Hash)
-				arg = Instanciation.from_hash(arg) if arg.kind_of?(Hash)
-				#~ raise ArgumentError, "vars are different ! #{(arg.vars - self.vars)} are not inside." if ! (arg.vars - self.vars).empty?
-				return get_from_instanciation(arg)
+			# [](arg : Hash) : Float
+			elsif arg.kind_of?(Hash)
+				res = 1.0
+				for var,val in arg
+					res *= @p[var][val] if @p.key?(var)
+				end
+				return res
 			# [](arg : Array[Variable]) : Potential
 			elsif arg.kind_of?(Array)
 				#~ raise ArgumentError, "vars are different ! #{(arg - self.vars)} are not inside." if ! (arg - self.vars).empty?
@@ -42,7 +43,7 @@ module SDYNA
 				end
 				return p
 			else
-				raise ArgumentError, "Wait a Variable, an Instanciation or an Array of Variable, got a #{arg.class}."
+				raise ArgumentError, "Wait a Variable, a Hash or an Array of Variable, got a #{arg.class}."
 			end
 		end
 		#
@@ -102,15 +103,6 @@ module SDYNA
 		#
 		def vars
 			return @p.keys
-		end		
-	private
-		#
-		def get_from_instanciation(i)			
-			res = 1.0
-			for var,val in i
-				res *= @p[var][val] if @p.key?(var)
-			end
-			return res
 		end
 	end
 end
