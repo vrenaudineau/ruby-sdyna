@@ -58,7 +58,6 @@ module SDYNA
 			100.times do
 				i += 1 if Exemple.select_attr( e, [v,w,x,y,z] ).label == "x"
 			end
-			p i
 		end
 	end
 end
