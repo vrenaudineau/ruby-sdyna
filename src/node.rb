@@ -277,8 +277,7 @@ module SDYNA
 				subtree.simplify!(newContext)
 			end
 			
-			# TODO : faire pour @branches.keys.size > 2
-			if children.size == 2 && children.first == children.last
+			if children.all? { |c| children.first == c }
 				correctNode = children.first
 				replace!(correctNode)
 			end
@@ -370,7 +369,7 @@ module SDYNA
 			elsif others.size == 1
 				return others[0].clone;
 			else
-				return others.pop.clone.append!( Tree.merge( others, f ), f ).simplify!;
+				return others.pop.clone.append!( Tree.merge( others, f ), f );
 			end
 		end # Tree.merge
 		# Empêche d'avoir un argument
