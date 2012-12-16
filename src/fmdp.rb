@@ -119,7 +119,7 @@ module SDYNA
 					vb += vbp * pbp # vb = Pb(b')*V(b') : Float
 				end
 				# (c). + 3.
-				l.set_leaf((@gamma*vb).round(1))
+				l.set_leaf(@gamma*vb)
 			end
 			# 4.
 			return @recompenses.clone.append!(pa, FMDP::RecompensesAddComb).simplify!
