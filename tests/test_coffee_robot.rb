@@ -19,9 +19,9 @@ module SDYNA
 					when "q"
 						break
 					when "p"
-						puts "Politique :", fmdp.politique
+						puts "Policy :", fmdp.policy
 					when "r"
-						puts "Recompences :", fmdp.recompenses
+						puts "Award :", fmdp.recompenses
 					when "a"
 						fmdp.q.each do |a,t|
 							puts "For #{a}", t
@@ -93,7 +93,7 @@ module SDYNA
 			end
 						
 			#### TESTS ####
-			pol = fmdp.politique
+			pol = fmdp.policy
 			assert pol[hrc=>true, off=>true].content == "del"
 			assert pol[hrc=>true, off=>false].content == "go"
 			assert pol[hrc=>false, off=>false].content == "buy"
@@ -178,7 +178,7 @@ module SDYNA
 			end
 			
 			#### TESTS ####
-			pol = fmdp.politique
+			pol = fmdp.policy
 			assert pol[hrc=>true, off=>true].content == "del"
 			assert pol[hrc=>true, off=>false].content == "go"
 			assert pol[hrc=>false, off=>false].content == "buy"
