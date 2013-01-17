@@ -1,5 +1,6 @@
 # encoding: utf-8
-require_relative "variable"
+
+require_relative "./variable"
 
 module SDYNA
 	#
@@ -17,9 +18,25 @@ module SDYNA
 			end
 			return p
 		end
-		#
-		def initialize
+		# If a Variable or an Array of Variable is given,
+		# initialize it with an uniform potential.
+		def initialize(arg=nil)
 			@p = {}
+			if arg.kind_of?(Variable)
+				@p[arg] = {}
+				val = 1.0 / arg.size.to_f
+				arg.each do |vi|
+					@p[arg][vi] = val
+				end				
+			elsif arg.kind_of?(Array)
+				arg.each do |v|
+					@p[v] = {}
+					val = 1.0 / v.size.to_f
+					v.each do |vi|
+						@p[v][vi] = val
+					end				
+				end
+			end
 		end
 		#
 		def [](arg)

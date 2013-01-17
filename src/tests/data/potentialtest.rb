@@ -1,7 +1,8 @@
 # encoding: utf-8
 
 require 'test/unit'
-require_relative "../src/potential"
+
+require_relative "../../data/potential"
 
 module SDYNA
 	class PotentialTest < Test::Unit::TestCase

@@ -1,7 +1,8 @@
 # encoding: utf-8
 
 require 'test/unit'
-require_relative "../src/variable"
+
+require_relative "../../data/variable"
 
 module SDYNA
 	class VariableTest < Test::Unit::TestCase
